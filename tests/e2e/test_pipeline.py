@@ -82,8 +82,9 @@ def test_analyze_endpoint_full_pipeline(mock_env, mock_ticket_payload):
     ):
         # Create a fresh FastAPI instance without lifespan to avoid initialization complexity
         from fastapi import FastAPI
-        from athena.routes import analyze, health, webhook
+
         from athena.config import Settings
+        from athena.routes import analyze, health, webhook
 
         app = FastAPI(
             title="Athena AIOps",

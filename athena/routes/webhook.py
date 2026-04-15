@@ -32,9 +32,7 @@ async def _process_webhook(job_id: int, app_state: dict):
 
 
 @router.post("/api/v1/webhook/aap2", status_code=202)
-async def receive_webhook(
-    request: Request, background_tasks: BackgroundTasks
-):
+async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
     """Receive AAP2 notification webhook and process asynchronously."""
     body = await request.json()
 

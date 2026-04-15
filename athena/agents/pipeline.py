@@ -12,10 +12,9 @@ import logging
 from pathlib import Path
 
 import yaml
-from langchain_core.messages import AIMessage
-
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
+from langchain_core.messages import AIMessage
 
 from athena.agents.tools import web_search
 from athena.config import Settings
@@ -69,9 +68,7 @@ def create_ops_manager(settings: Settings):
     )
 
 
-async def run_pipeline(
-    envelope: IncidentEnvelope, settings: Settings
-) -> TicketPayload:
+async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> TicketPayload:
     """Run the full agent pipeline on an incident.
 
     1. Write incident context to filesystem
@@ -117,9 +114,7 @@ async def run_pipeline(
     content = final_message.content
     if isinstance(content, list):
         text_parts = [
-            p.get("text", "")
-            for p in content
-            if isinstance(p, dict) and p.get("type") == "text"
+            p.get("text", "") for p in content if isinstance(p, dict) and p.get("type") == "text"
         ]
         content = "\n".join(text_parts)
 

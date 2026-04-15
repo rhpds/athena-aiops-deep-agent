@@ -57,9 +57,7 @@ async def test_create_ticket_sends_correct_payload(
     assert request.headers["Content-Type"] == "application/json"
 
 
-async def test_create_issue_on_ticket(
-    client: KiraClient, httpx_mock: pytest_httpx.HTTPXMock
-):
+async def test_create_issue_on_ticket(client: KiraClient, httpx_mock: pytest_httpx.HTTPXMock):
     httpx_mock.add_response(
         url="https://kira.example.com/api/v1/tickets/ticket-uuid-123/issues",
         method="POST",

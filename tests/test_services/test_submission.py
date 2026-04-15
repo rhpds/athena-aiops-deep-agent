@@ -62,9 +62,7 @@ async def test_submit_ticket_creates_ticket_and_issues(
     mock_kira.create_issue.assert_called_once_with("ticket-uuid-123", _ticket().issues[0])
 
 
-async def test_submit_ticket_posts_to_rocketchat(
-    mock_kira: AsyncMock, mock_rocketchat: AsyncMock
-):
+async def test_submit_ticket_posts_to_rocketchat(mock_kira: AsyncMock, mock_rocketchat: AsyncMock):
     await submit_ticket(
         payload=_ticket(),
         kira=mock_kira,

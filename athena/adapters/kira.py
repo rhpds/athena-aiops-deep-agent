@@ -58,9 +58,7 @@ class KiraClient:
             resp.raise_for_status()
             return resp.json()["data"]
 
-    async def upload_artifact(
-        self, ticket_id: str, filename: str, content: bytes
-    ) -> dict:
+    async def upload_artifact(self, ticket_id: str, filename: str, content: bytes) -> dict:
         """POST /api/v1/tickets/{ticket_id}/artifacts — upload a file artifact."""
         headers = {"X-API-Key": self._headers["X-API-Key"]}
         async with httpx.AsyncClient() as http:

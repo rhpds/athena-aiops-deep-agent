@@ -8,9 +8,9 @@ import httpx
 
 RISK_EMOJI = {
     "critical": "\U0001f534",  # red circle
-    "high": "\U0001f7e0",      # orange circle
-    "medium": "\U0001f7e1",    # yellow circle
-    "low": "\U0001f7e2",       # green circle
+    "high": "\U0001f7e0",  # orange circle
+    "medium": "\U0001f7e1",  # yellow circle
+    "low": "\U0001f7e2",  # green circle
 }
 
 

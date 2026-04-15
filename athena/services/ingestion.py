@@ -6,7 +6,7 @@ then builds a validated IncidentEnvelope Pydantic model.
 
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from athena.adapters.aap2 import AAP2Client
 from athena.models import (
@@ -31,9 +31,7 @@ def _extract_error_excerpt(stdout: str) -> str:
     return "\n".join(lines[-10:])
 
 
-async def build_incident_envelope(
-    aap2: AAP2Client, job_id: int
-) -> IncidentEnvelope:
+async def build_incident_envelope(aap2: AAP2Client, job_id: int) -> IncidentEnvelope:
     """Fetch all job data from AAP2 and build an IncidentEnvelope."""
     job_data = await aap2.get_job(job_id)
     stdout = await aap2.get_job_stdout(job_id)
@@ -72,7 +70,7 @@ async def build_incident_envelope(
 
     return IncidentEnvelope(
         event_id=str(uuid.uuid4()),
-        received_at=datetime.now(timezone.utc),
+        received_at=datetime.now(UTC),
         source="aap2",
         job=job_info,
         artifacts=artifacts,
