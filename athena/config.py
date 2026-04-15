@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """All Athena configuration. Validated at startup — missing required vars cause immediate failure."""
+    """All Athena configuration. Validated at startup — missing vars cause immediate failure."""
 
     model_config = {"env_prefix": "", "case_sensitive": False}
 
