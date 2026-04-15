@@ -1,0 +1,57 @@
+image:
+  repository: quay.io/tonykay/athena-aiops
+  tag: latest
+  pullPolicy: Always
+
+aap2:
+  url: ""
+  username: ""
+  password: ""
+  organization: ""
+
+kira:
+  url: ""
+  apiKey: ""
+
+rocketchat:
+  url: ""
+  apiAuthToken: ""
+  apiUserId: ""
+  channel: "support"
+
+# MaaS (LLM gateway) — uses litellm_* env var names per provisioning system
+maas:
+  apiBaseUrl: ""
+  virtualKey: ""
+
+tavily:
+  apiKey: ""
+
+service:
+  port: 8080
+  type: ClusterIP
+
+route:
+  enabled: true
+
+agentConfig:
+  opsManagerModel: "openai/claude-sonnet-4-6"
+  specialistModel: "openai/claude-sonnet-4-6"
+  reviewerModel: "openai/claude-3-5-haiku"
+  # Optional: override AGENTS.md and subagents.yaml baked into the image
+  # Use --set-file agentConfig.agentsMd=./AGENTS.md to override
+  agentsMd: ""
+  subagentsYaml: ""
+
+skills:
+  persistence:
+    enabled: true
+    size: 1Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

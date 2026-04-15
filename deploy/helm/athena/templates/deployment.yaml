@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "athena.fullname" . }}
+  labels:
+    {{- include "athena.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "athena.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "athena.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: athena
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            # AAP2
+            - name: AAP2_URL
+              value: {{ .Values.aap2.url | quote }}
+            - name: AAP2_USERNAME
+              value: {{ .Values.aap2.username | quote }}
+            - name: AAP2_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "athena.fullname" . }}
+                  key: aap2-password
+            - name: AAP2_ORGANIZATION
+              value: {{ .Values.aap2.organization | quote }}
+            # Kira
+            - name: KIRA_URL
+              value: {{ .Values.kira.url | quote }}
+            - name: KIRA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "athena.fullname" . }}
+                  key: kira-api-key
+            # Rocket.Chat
+            - name: ROCKETCHAT_URL
+              value: {{ .Values.rocketchat.url | quote }}
+            - name: ROCKETCHAT_API_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "athena.fullname" . }}
+                  key: rocketchat-auth-token
+            - name: ROCKETCHAT_API_USER_ID
+              value: {{ .Values.rocketchat.apiUserId | quote }}
+            - name: ROCKETCHAT_CHANNEL
+              value: {{ .Values.rocketchat.channel | quote }}
+            # MaaS (LLM gateway)
+            - name: LITELLM_API_BASE_URL
+              value: {{ .Values.maas.apiBaseUrl | quote }}
+            - name: LITELLM_VIRTUAL_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "athena.fullname" . }}
+                  key: maas-virtual-key
+            {{- if .Values.tavily.apiKey }}
+            - name: TAVILY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "athena.fullname" . }}
+                  key: tavily-api-key
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /app/AGENTS.md
+              subPath: AGENTS.md
+            - name: config
+              mountPath: /app/subagents.yaml
+              subPath: subagents.yaml
+            {{- if .Values.skills.persistence.enabled }}
+            - name: skills
+              mountPath: /app/skills
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "athena.fullname" . }}-config
+        {{- if .Values.skills.persistence.enabled }}
+        - name: skills
+          persistentVolumeClaim:
+            claimName: {{ include "athena.fullname" . }}-skills
+        {{- end }}
