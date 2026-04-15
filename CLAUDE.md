@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Athena** is an agentic AIOps service that listens for failed AAP2 (Ansible Automation Platform 2) Controller jobs, analyzes failures using a Deep Agents orchestration layer, and creates structured incident tickets in the `kira` ticketing system via API. Optional Rocket.Chat notifications. Designed as a practical Deep Agents lab for OpenShift.
+**Athena** is an agentic AIOps service that listens for failed AAP2 (Ansible Automation Platform 2) Controller jobs, analyzes failures using a Deep Agents orchestration layer, and creates structured incident tickets in the `kira` ticketing system via API. Notifications are posted to Rocket.Chat `#support`. Designed as a practical Deep Agents lab for OpenShift.
 
-This repo evolves from `../1st-pass-deepagents-poc/` which proved out the Deep Agents pattern with a simpler ops_manager + SRE subagent setup. Athena adds AAP2 webhook ingestion, ticket generation, the `kira` adapter, and a reviewer step.
+This repo evolves from `../1st-pass-deepagents-poc/` which proved out the Deep Agents pattern with a simpler ops_manager + SRE subagent setup. Athena adds AAP2 webhook ingestion, ticket generation, the Kira adapter, a reviewer step, and OpenShift deployment.
 
 ## Commands
 
@@ -16,31 +16,38 @@ This repo evolves from `../1st-pass-deepagents-poc/` which proved out the Deep A
 # Install dependencies
 uv sync
 
-# Run the service
+# Install with dev tools
+uv sync --extra dev
+
+# Run the service (requires env vars — see athena/config.py)
 uv run python -m athena
 
 # Run tests
 uv run pytest
 
 # Run a single test
-uv run pytest tests/test_foo.py::test_name -v
+uv run pytest tests/test_adapters/test_kira.py::test_create_ticket_sends_correct_payload -v
 
 # Lint and format
 uv run ruff check .
 uv run ruff format --check .
+
+# Auto-fix lint and format
+uv run ruff check --fix . && uv run ruff format .
 ```
 
 ## Architecture
 
+### Hybrid with Smart Reviewer
+
+Agents handle classification, root-cause analysis, and intelligent review. Deterministic Python code handles API plumbing — Kira submission, Rocket.Chat notification, schema validation. The agent boundary falls where LLM reasoning adds value.
+
 ### Deep Agents Pattern
 
-The framework uses filesystem-based configuration — not code — for agent behavior:
-
-- `AGENTS.md` — loaded as persistent memory (system prompt) for the `ops_manager` via `MemoryMiddleware`
-- `skills/<domain>/` — per-subagent skill directories loaded via `SkillsMiddleware`; each skill is a folder containing `SKILL.md` plus optional templates
-- `skills/common/` — shared skills referenced by all subagents
-- `subagents.yaml` — defines specialist subagents; loaded by `load_subagents()` helper (not native to deepagents). Mounted from ConfigMap for hot-reload on pod restart
-- `templates/` — Jinja2 or markdown templates for ticket output (`TICKET.md.j2`, `output-kira.md`, `output-rocketchat.md`)
+- `AGENTS.md` — loaded as persistent memory (system prompt) for `ops_manager` via `MemoryMiddleware`
+- `skills/` — per-subagent skill directories loaded via `SkillsMiddleware`; each skill is a folder containing `SKILL.md`
+- `subagents.yaml` — defines specialist subagents; loaded by `load_subagents()` in `athena/agents/pipeline.py`
+- `templates/ticket.md.j2` — Jinja2 ticket template
 
 Built-in deepagents tools: `write_file`, `read_file`, `edit_file`, `ls`, `glob`, `grep`, `execute`, `task` (subagent delegation), `write_todos`.
 
@@ -48,50 +55,59 @@ Built-in deepagents tools: `write_file`, `read_file`, `edit_file`, `ls`, `glob`,
 
 ```
 AAP2 webhook → athena service → ops_manager (main agent)
-                                    ├── sre_ansible     (playbook/role/collection/credential issues)
+                                    ├── sre_ansible     (playbook/role/collection/credential)
                                     ├── sre_linux       (dnf/systemd/SELinux/filesystem/Satellite)
-                                    └── sre_openshift   (pod/image/RBAC/operator/networking)
-                                    
-ops_manager produces TICKET.md → reviewer validates → informer routes to:
-                                                        ├── kira (API)
-                                                        └── rocket.chat (optional)
+                                    ├── sre_openshift   (pod/image/RBAC/operator/networking)
+                                    └── sre_networking  (DNS/SSH/proxy/TLS/routing)
+
+ops_manager → reviewer (validates ticket quality on Haiku)
+           → returns TicketPayload (structured output)
+
+submission.py → Kira API (create ticket + issues)
+             → Rocket.Chat #support (notification)
 ```
 
 ### Flow
 
-1. AAP2 sends a webhook to Athena when a job fails
-2. Athena retrieves job artifacts (stdout, events, metadata, template, related files) via `aap2_*` tools
-3. Normalizes into an internal incident envelope and passes to `ops_manager`
-4. `ops_manager` classifies the failure domain using the `error-classifier` skill
-5. Delegates to one specialist SRE subagent (`sre_ansible`, `sre_linux`, or `sre_openshift`)
-6. SRE subagent performs root-cause analysis, produces `TICKET.md`
-7. `reviewer` validates ticket completeness, schema, actionability
-8. `informer` routes to `kira` via API adapter and optionally to Rocket.Chat
+1. AAP2 sends a webhook to `POST /api/v1/webhook/aap2` (or user triggers `POST /api/v1/analyze`)
+2. `services/ingestion.py` retrieves job artifacts via `adapters/aap2.py` and builds `IncidentEnvelope`
+3. `agents/pipeline.py` writes `incident.json`, invokes `ops_manager`
+4. `ops_manager` classifies domain using `error-classifier` skill
+5. Delegates to one specialist SRE subagent via `task` tool
+6. SRE subagent performs root-cause analysis using domain skills
+7. `reviewer` subagent validates ticket quality
+8. `ops_manager` returns structured `TicketPayload` JSON
+9. `services/submission.py` sends to Kira, posts to Rocket.Chat
 
-### Custom Tools (small surface by design)
+### Code Layout
 
-- `aap2_get_job`, `aap2_get_job_events`, `aap2_get_job_stdout`, `aap2_get_job_template`, `aap2_get_related_artifacts` — AAP2 Controller API
-- `kira_create_ticket` — ticketing system adapter
-- `rocketchat_post_message` — notification adapter
-- `web_search` via Tavily (optional)
+```
+athena/
+├── config.py        # Pydantic BaseSettings — all env vars
+├── models.py        # IncidentEnvelope, TicketPayload, DOMAIN_TO_KIRA_AREA
+├── app.py           # FastAPI app, lifespan (client init, webhook registration)
+├── adapters/        # Async HTTP clients: aap2.py, kira.py, rocketchat.py
+├── services/        # ingestion.py (AAP2 → IncidentEnvelope), submission.py (→ Kira + Rocket.Chat)
+├── agents/          # pipeline.py (Deep Agents wiring), tools.py (@tool functions)
+└── routes/          # health.py (/healthz, /readyz), webhook.py, analyze.py
+```
 
 ### Skills
 
 Skills live in `skills/` (mountable PVC). Each is a folder with `SKILL.md`:
 
 - `error-classifier` — classify failure domain, emit domain/confidence/rationale
-- `analyze-ansible-failure`, `analyze-linux-failure`, `analyze-openshift-failure` — domain-specific analysis
-- `create-ticket` — produce canonical `TICKET.md`
-- `review-ticket` — validate required sections and coherence
-- `output-to-kira` — map ticket into Kira API payload
-- `output-to-rocket-chat` — format notification with ticket link
+- `analyze-ansible-failure`, `analyze-linux-failure`, `analyze-openshift-failure`, `analyze-networking-failure`
+- `create-ticket` — guide structured TicketPayload output
+- `review-ticket` — validate coherence, confidence, actionability
+- `common/log-analysis` — shared Ansible stdout parsing
 
 ## Adding a New Subagent
 
 1. Add entry to `subagents.yaml` with description, model, system_prompt, tools, skills
-2. Add any new `@tool` functions in the service code
-3. Register tool names in the `available_tools` dict inside `load_subagents()`
-4. Create skill directory `skills/<domain>/` with subdirectories containing `SKILL.md`
+2. Add any new `@tool` functions in `athena/agents/tools.py`
+3. Register tool names in `available_tools` dict inside `load_subagents()` in `athena/agents/pipeline.py`
+4. Create skill directory `skills/<domain>/` with `SKILL.md`
 5. Update `AGENTS.md` domain awareness section
 
 ## Adding a New Skill
@@ -103,23 +119,29 @@ Skills live in `skills/` (mountable PVC). Each is a folder with `SKILL.md`:
 
 ## Deployment
 
-Single Python service in one container on OpenShift. Stateless pod with externalized config:
-- `AGENTS.md` and `subagents.yaml` from ConfigMaps
-- Credentials (AAP2, Kira, Rocket.Chat, Tavily) from Secrets
+Single Python service in one container on OpenShift via Helm chart (`deploy/helm/athena/`):
+- `AGENTS.md` and `subagents.yaml` baked into image, overridable via ConfigMap
+- Credentials (AAP2, Kira, Rocket.Chat, MaaS) from Secrets
 - `skills/` from PVC (add skills without rebuilding the image)
+- OpenShift Route exposes webhook endpoint for AAP2
+- Auto-registers AAP2 webhook notification template on startup (idempotent)
 
 ## Key Conventions
 
 - Python 3.13 — always use `uv`, never `pip`
 - Always use Pydantic V2 for structured outputs with OpenAI API
 - Skills first: prefer skills over large tool sets to reduce context load
-- Subagent models default to `anthropic:claude-sonnet-4-20250514`
+- Models route through MaaS gateway (OpenAI-compatible) — prefixed `openai/` in subagents.yaml
+- Subagent models default to `openai/claude-sonnet-4-6`, reviewer uses `openai/claude-3-5-haiku`
 - Keep the tool surface small — filesystem and skills do the heavy lifting
 - `prd-athena.md` is the authoritative product requirements document
+- Design spec at `docs/superpowers/specs/2026-04-15-athena-aiops-design.md`
 
 ## Resources and References
 
 - [LangChain Deep Agents repo](https://github.com/langchain-ai/deepagents.git) — framework source and `examples/` directory for implementation patterns
+- [Kira ticketing system](https://github.com/tonykay/kira) — source and deployment
+- [Kira OpenAPI spec](https://github.com/tonykay/kira/blob/main/docs/api/openapi.yaml) — authoritative field/enum reference
 - [Introducing Deep Agents](https://blog.langchain.com/deep-agents/)
 - [Doubling Down on Deep Agents](https://blog.langchain.com/doubling-down-on-deepagents/)
 - [Using Skills with Deep Agents](https://blog.langchain.com/using-skills-with-deep-agents/)
