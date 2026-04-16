@@ -87,13 +87,22 @@ async def test_register_webhook_creates_when_missing(
         json={"id": 1, "name": "athena-webhook"},
         status_code=201,
     )
+    # List job templates for attachment
+    httpx_mock.add_response(
+        url="https://aap2.example.com/api/controller/v2/job_templates/?page_size=100",
+        method="GET",
+        json={"results": [{"id": 10, "name": "test-jt"}]},
+    )
+    # Attach notification to job template
+    httpx_mock.add_response(
+        url="https://aap2.example.com/api/controller/v2/job_templates/10/notification_templates_error/",
+        method="POST",
+        json={},
+        status_code=204,
+    )
 
     template_id = await client.register_webhook("https://athena.example.com/api/v1/webhook/aap2")
     assert template_id == 1
-
-    requests = httpx_mock.get_requests()
-    assert len(requests) == 2
-    assert requests[1].method == "POST"
 
 
 async def test_register_webhook_skips_when_exists(
@@ -114,9 +123,12 @@ async def test_register_webhook_skips_when_exists(
             ]
         },
     )
+    # List job templates for attachment
+    httpx_mock.add_response(
+        url="https://aap2.example.com/api/controller/v2/job_templates/?page_size=100",
+        method="GET",
+        json={"results": []},
+    )
 
     template_id = await client.register_webhook("https://athena.example.com/api/v1/webhook/aap2")
     assert template_id == 99
-
-    # Only the GET request, no POST
-    assert len(httpx_mock.get_requests()) == 1
