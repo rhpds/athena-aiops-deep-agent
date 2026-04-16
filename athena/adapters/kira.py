@@ -2,11 +2,26 @@
 
 API reference: https://github.com/tonykay/kira/blob/main/docs/api/openapi.yaml
 Auth: X-API-Key header.
+
+Kira expects confidence and risk as floats 0.0–1.0. Our TicketPayload uses
+confidence as int 0–100 and risk as a string. This adapter handles the mapping.
 """
+
+import logging
 
 import httpx
 
 from athena.models import IssuePayload, TicketPayload
+
+logger = logging.getLogger(__name__)
+
+# Map risk labels to 0.0–1.0 float values for Kira
+RISK_TO_FLOAT = {
+    "critical": 1.0,
+    "high": 0.8,
+    "medium": 0.5,
+    "low": 0.2,
+}
 
 
 class KiraClient:
@@ -20,13 +35,13 @@ class KiraClient:
         }
 
     async def create_ticket(self, payload: TicketPayload) -> dict:
-        """POST /api/v1/tickets — create a new ticket. Returns the ticket data dict."""
+        """POST /api/v1/tickets — create a new ticket. Returns the ticket data."""
         body = {
             "title": payload.title,
             "description": payload.description,
             "area": payload.area,
-            "confidence": payload.confidence,
-            "risk": payload.risk,
+            "confidence": payload.confidence / 100.0,  # int 0-100 → float 0.0-1.0
+            "risk": RISK_TO_FLOAT.get(payload.risk, 0.5),  # label → float 0.0-1.0
             "stage": payload.stage,
             "recommended_action": payload.recommended_action,
             "affected_systems": payload.affected_systems,
@@ -39,8 +54,10 @@ class KiraClient:
                 json=body,
                 headers=self._headers,
             )
+            if resp.status_code >= 400:
+                logger.error("Kira rejected ticket: %s %s", resp.status_code, resp.text)
             resp.raise_for_status()
-            return resp.json()["data"]
+            return resp.json()
 
     async def create_issue(self, ticket_id: str, issue: IssuePayload) -> dict:
         """POST /api/v1/tickets/{ticket_id}/issues — attach an issue to a ticket."""
@@ -55,8 +72,10 @@ class KiraClient:
                 json=body,
                 headers=self._headers,
             )
+            if resp.status_code >= 400:
+                logger.error("Kira rejected issue: %s %s", resp.status_code, resp.text)
             resp.raise_for_status()
-            return resp.json()["data"]
+            return resp.json()
 
     async def upload_artifact(self, ticket_id: str, filename: str, content: bytes) -> dict:
         """POST /api/v1/tickets/{ticket_id}/artifacts — upload a file artifact."""
@@ -68,4 +87,4 @@ class KiraClient:
                 headers=headers,
             )
             resp.raise_for_status()
-            return resp.json()["data"]
+            return resp.json()

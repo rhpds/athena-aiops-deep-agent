@@ -41,10 +41,8 @@ async def test_create_ticket_sends_correct_payload(
         url="https://kira.example.com/api/v1/tickets",
         method="POST",
         json={
-            "data": {
-                "id": "ticket-uuid-123",
-                "title": "Deploy Web App failed: missing httpd package",
-            }
+            "id": "ticket-uuid-123",
+            "title": "Deploy Web App failed: missing httpd package",
         },
         status_code=201,
     )
@@ -55,13 +53,19 @@ async def test_create_ticket_sends_correct_payload(
     request = httpx_mock.get_request()
     assert request.headers["X-API-Key"] == "test-key"
     assert request.headers["Content-Type"] == "application/json"
+    # Verify confidence was converted to 0.0-1.0
+    import json
+
+    body = json.loads(request.content)
+    assert body["confidence"] == 0.85
+    assert body["risk"] == 0.8  # "high" → 0.8
 
 
 async def test_create_issue_on_ticket(client: KiraClient, httpx_mock: pytest_httpx.HTTPXMock):
     httpx_mock.add_response(
         url="https://kira.example.com/api/v1/tickets/ticket-uuid-123/issues",
         method="POST",
-        json={"data": {"id": "issue-uuid-456", "title": "Package httpd not found"}},
+        json={"id": "issue-uuid-456", "title": "Package httpd not found"},
         status_code=201,
     )
 
