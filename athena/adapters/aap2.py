@@ -12,8 +12,9 @@ import httpx
 class AAP2Client:
     """Async client for AAP2 Controller REST API."""
 
-    def __init__(self, base_url: str, username: str, password: str):
+    def __init__(self, base_url: str, username: str, password: str, organization: str = ""):
         self._base_url = base_url.rstrip("/")
+        self._organization = organization
         credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
         self._headers = {
             "Authorization": f"Basic {credentials}",
@@ -71,13 +72,31 @@ class AAP2Client:
             "inventory": summary.get("inventory", {}).get("name"),
         }
 
+    async def _resolve_organization_id(self, http: httpx.AsyncClient) -> int | None:
+        """Resolve the organization name to its ID. Returns None if not set."""
+        if not self._organization:
+            return None
+        resp = await http.get(
+            f"{self._base_url}/api/v2/organizations/",
+            params={"name": self._organization},
+            headers=self._headers,
+        )
+        resp.raise_for_status()
+        results = resp.json().get("results", [])
+        if results:
+            return results[0]["id"]
+        return None
+
     async def register_webhook(self, target_url: str) -> int:
         """Ensure a notification template exists for Athena's webhook.
 
         Idempotent: if a template already points at target_url, returns its ID.
-        Otherwise creates a new one. Returns the template ID.
+        Otherwise creates a new one. Per-org so each user gets their own webhook.
+        Returns the template ID.
         """
         async with httpx.AsyncClient() as http:
+            org_id = await self._resolve_organization_id(http)
+
             # Check existing templates
             resp = await http.get(
                 f"{self._base_url}/api/v2/notification_templates/",
@@ -92,11 +111,11 @@ class AAP2Client:
                 if config.get("url") == target_url:
                     return tpl["id"]
 
-            # Create new template
+            # Create new template scoped to the user's organization
             body = {
                 "name": "athena-webhook",
                 "description": "Athena AIOps failure notification webhook",
-                "organization": None,
+                "organization": org_id,
                 "notification_type": "webhook",
                 "notification_configuration": {
                     "url": target_url,

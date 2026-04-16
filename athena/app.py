@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI):
         base_url=settings.aap2_url,
         username=settings.aap2_username,
         password=settings.aap2_password.get_secret_value(),
+        organization=settings.aap2_organization,
     )
     kira = KiraClient(
         base_url=settings.kira_url,
