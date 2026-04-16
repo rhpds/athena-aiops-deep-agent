@@ -7,3 +7,8 @@ dist/
 .pytest_cache/
 investigations/
 .env
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
