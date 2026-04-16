@@ -21,7 +21,10 @@ async def lifespan(app: FastAPI):
     # Load and validate configuration
     settings = Settings()
 
-    # Configure MaaS gateway for LangChain (OpenAI-compatible endpoint)
+    # Configure MaaS gateway for LangChain litellm provider
+    os.environ["LITELLM_API_BASE"] = settings.litellm_api_base_url
+    os.environ["LITELLM_API_KEY"] = settings.litellm_virtual_key.get_secret_value()
+    # Also set OpenAI vars as fallback for direct OpenAI-compatible calls
     os.environ["OPENAI_API_BASE"] = settings.litellm_api_base_url
     os.environ["OPENAI_API_KEY"] = settings.litellm_virtual_key.get_secret_value()
 
