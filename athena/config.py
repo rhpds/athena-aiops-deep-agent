@@ -16,8 +16,9 @@ class Settings(BaseSettings):
     aap2_organization: str
 
     # Kira ticketing system
-    kira_url: str
+    kira_url: str  # API URL (internal service, e.g. http://api:8000)
     kira_api_key: SecretStr
+    kira_frontend_url: str | None = None  # External frontend URL for ticket links
 
     # Rocket.Chat
     rocketchat_url: str

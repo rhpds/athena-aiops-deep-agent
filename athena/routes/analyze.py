@@ -31,7 +31,7 @@ async def analyze_job(body: AnalyzeRequest, request: Request):
         payload=ticket_payload,
         kira=s.kira,
         rocketchat=s.rocketchat,
-        kira_frontend_url=s.settings.kira_url,
+        kira_frontend_url=s.settings.kira_frontend_url or s.settings.kira_url,
         rocketchat_channel=s.settings.rocketchat_channel,
         job_name=envelope.job.name,
     )

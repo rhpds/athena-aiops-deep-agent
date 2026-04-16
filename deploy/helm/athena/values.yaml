@@ -12,6 +12,7 @@ aap2:
 kira:
   url: ""
   apiKey: ""
+  frontendUrl: ""  # External URL for ticket links in notifications
 
 rocketchat:
   url: ""

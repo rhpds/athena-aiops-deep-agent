@@ -42,6 +42,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "athena.fullname" . }}
                   key: kira-api-key
+            {{- if .Values.kira.frontendUrl }}
+            - name: KIRA_FRONTEND_URL
+              value: {{ .Values.kira.frontendUrl | quote }}
+            {{- end }}
             # Rocket.Chat
             - name: ROCKETCHAT_URL
               value: {{ .Values.rocketchat.url | quote }}

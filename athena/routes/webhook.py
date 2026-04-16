@@ -23,7 +23,7 @@ async def _process_webhook(job_id: int, state: State):
             payload=ticket_payload,
             kira=state.kira,
             rocketchat=state.rocketchat,
-            kira_frontend_url=state.settings.kira_url,
+            kira_frontend_url=state.settings.kira_frontend_url or state.settings.kira_url,
             rocketchat_channel=state.settings.rocketchat_channel,
             job_name=envelope.job.name,
         )
