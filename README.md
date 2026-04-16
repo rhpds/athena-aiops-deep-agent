@@ -1,6 +1,6 @@
 # Athena AIOps
 
-An agentic AIOps service that automatically analyzes failed Ansible Automation Platform 2 (AAP2) jobs, diagnoses root causes, and creates structured incident tickets — built on [LangChain Deep Agents](https://github.com/langchain-ai/deepagents), a 2nd-generation agentic framework for OpenShift.
+An agentic AIOps service that automatically analyzes failed Ansible Automation Platform 2 (AAP2) jobs, diagnoses root causes, and creates structured incident tickets — built on [LangChain Deep Agents](https://github.com/langchain-ai/deepagents), a 2nd-generation agentic framework deployed to OpenShift, Kubernetes, or locally via Podman or Docker.
 
 ## Why Athena
 
