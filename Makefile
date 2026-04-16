@@ -1,5 +1,5 @@
 IMAGE_REGISTRY ?= quay.io
-IMAGE_NAMESPACE ?= tonykay
+IMAGE_NAMESPACE ?= rhpds
 IMAGE_NAME ?= athena-aiops
 IMAGE_TAG ?= latest
 IMAGE := $(IMAGE_REGISTRY)/$(IMAGE_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
@@ -8,16 +8,15 @@ PLATFORMS := linux/amd64,linux/arm64
 
 .PHONY: build push run test lint clean
 
-## Build multi-arch image and push to registry
+## Build multi-arch manifest and push to registry
 push:
-	docker buildx build \
-		--platform $(PLATFORMS) \
-		--tag $(IMAGE) \
-		--push .
+	podman manifest create $(IMAGE) --amend 2>/dev/null || true
+	podman build --platform $(PLATFORMS) --manifest $(IMAGE) .
+	podman manifest push $(IMAGE) docker://$(IMAGE)
 
 ## Build for local architecture only (no push)
 build:
-	docker build --tag $(IMAGE) .
+	podman build --tag $(IMAGE) .
 
 ## Run locally (requires env vars)
 run:
