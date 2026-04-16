@@ -5,6 +5,8 @@ metadata:
   name: {{ include "athena.fullname" . }}
   labels:
     {{- include "athena.labels" . | nindent 4 }}
+  annotations:
+    haproxy.router.openshift.io/timeout: "300s"
 spec:
   to:
     kind: Service

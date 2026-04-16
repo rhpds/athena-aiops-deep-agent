@@ -31,9 +31,12 @@ async def submit_ticket(
     ticket_id = ticket_data["id"]
     ticket_url = f"{kira_frontend_url.rstrip('/')}/tickets/{ticket_id}"
 
-    # Attach issues
+    # Attach issues (non-fatal — ticket is already created)
     for issue in payload.issues:
-        await kira.create_issue(ticket_id, issue)
+        try:
+            await kira.create_issue(ticket_id, issue)
+        except Exception:
+            logger.warning("Failed to attach issue '%s' to ticket %s", issue.title, ticket_id)
 
     # Notify Rocket.Chat (non-fatal)
     try:
