@@ -3,7 +3,7 @@ sre_ansible:
     Ansible/AAP2 specialist. Delegate automation failures: playbook syntax,
     role/collection errors, credential issues, execution environment problems,
     variable resolution, job template misconfiguration.
-  model: litellm/claude-sonnet-4-6
+  model: openai:claude-sonnet-4-6
   system_prompt: |
     You are a senior Ansible and AAP2 SRE. You receive incident data from failed
     AAP2 jobs and perform root-cause analysis on automation-related failures.
@@ -28,7 +28,7 @@ sre_linux:
   description: >
     Linux specialist. Delegate host-level failures: package manager (dnf/yum),
     systemd services, SELinux, filesystem/permissions, Satellite content issues.
-  model: litellm/claude-sonnet-4-6
+  model: openai:claude-sonnet-4-6
   system_prompt: |
     You are a senior Linux SRE. You receive incident data from failed AAP2 jobs
     and perform root-cause analysis on host-level Linux issues.
@@ -53,7 +53,7 @@ sre_openshift:
   description: >
     OpenShift/Kubernetes specialist. Delegate cluster failures: pod scheduling,
     image pull, RBAC, operator lifecycle, namespace/quota, routes/services.
-  model: litellm/claude-sonnet-4-6
+  model: openai:claude-sonnet-4-6
   system_prompt: |
     You are a senior OpenShift/Kubernetes SRE. You receive incident data from
     failed AAP2 jobs and perform root-cause analysis on cluster-related issues.
@@ -78,7 +78,7 @@ sre_networking:
   description: >
     Networking specialist. Delegate connectivity failures: DNS resolution,
     SSH timeouts, proxy/TLS issues, routing, firewall rules, unreachable hosts.
-  model: litellm/claude-sonnet-4-6
+  model: openai:claude-sonnet-4-6
   system_prompt: |
     You are a senior network engineer. You receive incident data from failed
     AAP2 jobs and perform root-cause analysis on connectivity issues.
@@ -103,7 +103,7 @@ reviewer:
   description: >
     Quality reviewer. Validates ticket analysis for coherence, confidence
     justification, and actionable recommendations before submission.
-  model: litellm/claude-3-5-haiku
+  model: openai:claude-3-5-haiku
   system_prompt: |
     You review incident tickets produced by SRE specialists analyzing AAP2 job
     failures. Your job is quality assurance — not re-analysis.
