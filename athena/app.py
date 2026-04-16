@@ -47,12 +47,10 @@ async def lifespan(app: FastAPI):
     )
 
     # Store in app state for route handlers
-    app.state._state = {
-        "settings": settings,
-        "aap2": aap2,
-        "kira": kira,
-        "rocketchat": rocketchat,
-    }
+    app.state.settings = settings
+    app.state.aap2 = aap2
+    app.state.kira = kira
+    app.state.rocketchat = rocketchat
 
     # Register webhook in AAP2 (idempotent)
     try:

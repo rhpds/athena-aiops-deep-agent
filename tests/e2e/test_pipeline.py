@@ -95,18 +95,12 @@ def test_analyze_endpoint_full_pipeline(mock_env, mock_ticket_payload):
         app.include_router(webhook.router)
         app.include_router(analyze.router)
 
-        # Set state before creating TestClient
-        # Access the internal _state dict directly
+        # Set state attributes directly (matching app.py lifespan pattern)
         settings = Settings()
-        state_dict = {
-            "settings": settings,
-            "aap2": mock_aap2,
-            "kira": mock_kira,
-            "rocketchat": mock_rocketchat,
-        }
-        # Manually populate the internal _state dict
-        for key, value in state_dict.items():
-            app.state._state[key] = value
+        app.state.settings = settings
+        app.state.aap2 = mock_aap2
+        app.state.kira = mock_kira
+        app.state.rocketchat = mock_rocketchat
 
         with TestClient(app, raise_server_exceptions=True) as client:
             resp = client.post("/api/v1/analyze", json={"job_id": 42})

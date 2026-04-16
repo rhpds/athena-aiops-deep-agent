@@ -23,16 +23,16 @@ async def analyze_job(body: AnalyzeRequest, request: Request):
 
     Runs the full pipeline synchronously and returns the ticket info.
     """
-    state = request.app.state._state
+    s = request.app.state
 
-    envelope = await build_incident_envelope(state["aap2"], job_id=body.job_id)
-    ticket_payload = await run_pipeline(envelope, state["settings"])
+    envelope = await build_incident_envelope(s.aap2, job_id=body.job_id)
+    ticket_payload = await run_pipeline(envelope, s.settings)
     result = await submit_ticket(
         payload=ticket_payload,
-        kira=state["kira"],
-        rocketchat=state["rocketchat"],
-        kira_frontend_url=state["settings"].kira_url,
-        rocketchat_channel=state["settings"].rocketchat_channel,
+        kira=s.kira,
+        rocketchat=s.rocketchat,
+        kira_frontend_url=s.settings.kira_url,
+        rocketchat_channel=s.settings.rocketchat_channel,
         job_name=envelope.job.name,
     )
 
