@@ -16,24 +16,24 @@ This isn't a simple "summarize the logs" tool. Athena uses a multi-agent archite
   AAP2 Controller                    Athena Service                         External Systems
  ┌──────────────┐     webhook     ┌─────────────────────┐               ┌──────────────────┐
  │  Job fails   │────────────────>│  Ingest & normalize │               │                  │
- │              │                 │         │            │               │   Kira Ticketing  │
- └──────────────┘                 │         v            │   ticket      │                  │
-                                  │  ┌─────────────┐    │──────────────>│  - root cause     │
-                                  │  │ ops_manager  │    │               │  - confidence     │
-                                  │  │  (classify)  │    │               │  - remediation    │
-                                  │  └──────┬───────┘    │               └──────────────────┘
-                                  │         │ delegate   │
-                                  │    ┌────┼────┐       │               ┌──────────────────┐
-                                  │    v    v    v       │   notify      │                  │
+ │              │                 │         │           │               │  Kira Ticketing  │
+ └──────────────┘                 │         v           │   ticket      │                  │
+                                  │  ┌──────────────┐   │──────────────>│  - root cause    │
+                                  │  │ ops_manager  │   │               │  - confidence    │
+                                  │  │  (classify)  │   │               │  - remediation   │
+                                  │  └──────┬───────┘   │               └──────────────────┘
+                                  │         │ delegate  │
+                                  │    ┌────┼────┐      │               ┌──────────────────┐
+                                  │    v    v    v      │   notify      │                  │
                                   │  ┌───┐┌───┐┌───┐    │──────────────>│  Rocket.Chat     │
-                                  │  │SRE││SRE││SRE│    │               │  #support         │
+                                  │  │SRE││SRE││SRE│    │               │  #support        │
                                   │  └─┬─┘└───┘└───┘    │               └──────────────────┘
-                                  │    │                 │
-                                  │    v                 │               ┌──────────────────┐
-                                  │  ┌──────────┐       │               │                  │
-                                  │  │ reviewer  │       │               │  MaaS LLM Gateway│
-                                  │  │ (validate)│       │<─────────────>│  (Claude, GPT,   │
-                                  │  └──────────┘       │   LLM calls   │   Gemini, etc.)  │
+                                  │    │                │
+                                  │    v                │               ┌──────────────────┐
+                                  │  ┌───────────┐      │               │                  │
+                                  │  │ reviewer  │      │               │  MaaS LLM Gateway│
+                                  │  │ (validate)│      │<─────────────>│  (Claude, GPT,   │
+                                  │  └───────────┘      │   LLM calls   │   Gemini, etc.)  │
                                   └─────────────────────┘               └──────────────────┘
 ```
 
