@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "athena_aiops_deep_agent",
+  "project_id": "b414edb7-4455-4f65-90ff-43bc0d37561d"
+}

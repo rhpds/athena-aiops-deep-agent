@@ -1,0 +1,39 @@
+[project]
+name = "athena-aiops"
+version = "0.1.0"
+description = "Agentic AIOps service — AAP2 failure analysis via Deep Agents"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "httpx>=0.28",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "deepagents",
+    "langchain-core",
+    "langchain-anthropic",
+    "langchain-openai",
+    "tavily-python",
+    "pyyaml",
+    "rich",
+    "jinja2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.25",
+    "pytest-httpx>=0.35",
+    "ruff>=0.8",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

@@ -1,0 +1,32 @@
+# Incident Ticket: {{ title }}
+
+**Area:** {{ area }}
+**Risk:** {{ risk }}
+**Confidence:** {{ confidence }}%
+**Stage:** {{ stage }}
+
+## Description
+
+{{ description }}
+
+## Recommended Action
+
+{{ recommended_action }}
+
+## Affected Systems
+
+{% for system in affected_systems %}- {{ system }}
+{% endfor %}
+
+## Issues
+
+{% for issue in issues %}### {{ issue.title }} ({{ issue.severity }})
+
+{{ issue.description }}
+
+{% endfor %}
+
+## Required Skills
+
+{% for skill in skills %}- {{ skill }}
+{% endfor %}
