@@ -17,7 +17,7 @@ def client() -> AAP2Client:
 
 async def test_get_job(client: AAP2Client, httpx_mock: pytest_httpx.HTTPXMock):
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/v2/jobs/42/",
+        url="https://aap2.example.com/api/controller/v2/jobs/42/",
         method="GET",
         json={
             "id": 42,
@@ -44,7 +44,7 @@ async def test_get_job(client: AAP2Client, httpx_mock: pytest_httpx.HTTPXMock):
 
 async def test_get_job_stdout(client: AAP2Client, httpx_mock: pytest_httpx.HTTPXMock):
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/v2/jobs/42/stdout/?format=txt",
+        url="https://aap2.example.com/api/controller/v2/jobs/42/stdout/?format=txt",
         method="GET",
         text="TASK [install httpd] ***\nfatal: FAILED! => No package httpd available\n",
     )
@@ -57,7 +57,7 @@ async def test_get_job_events_filters_failed(
     client: AAP2Client, httpx_mock: pytest_httpx.HTTPXMock
 ):
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/v2/jobs/42/job_events/?event=runner_on_failed&page_size=50",
+        url="https://aap2.example.com/api/controller/v2/jobs/42/job_events/?event=runner_on_failed&page_size=50",
         method="GET",
         json={
             "results": [
@@ -76,13 +76,13 @@ async def test_register_webhook_creates_when_missing(
 ):
     # List existing templates — none match
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/v2/notification_templates/?page_size=100",
+        url="https://aap2.example.com/api/controller/v2/notification_templates/?page_size=100",
         method="GET",
         json={"results": []},
     )
     # Create notification template
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/v2/notification_templates/",
+        url="https://aap2.example.com/api/controller/v2/notification_templates/",
         method="POST",
         json={"id": 1, "name": "athena-webhook"},
         status_code=201,
@@ -100,7 +100,7 @@ async def test_register_webhook_skips_when_exists(
     client: AAP2Client, httpx_mock: pytest_httpx.HTTPXMock
 ):
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/v2/notification_templates/?page_size=100",
+        url="https://aap2.example.com/api/controller/v2/notification_templates/?page_size=100",
         method="GET",
         json={
             "results": [

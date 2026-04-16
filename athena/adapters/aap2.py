@@ -1,7 +1,10 @@
 """AAP2 Controller API client.
 
-Wraps the AAP2 v2 REST API for job retrieval and webhook registration.
+Wraps the AAP2 REST API for job retrieval and webhook registration.
 Auth: HTTP Basic Auth.
+
+AAP2 gateway exposes the controller API at /api/controller/v2/.
+The api_prefix defaults to this but can be overridden for standalone controllers.
 """
 
 import base64
@@ -12,8 +15,16 @@ import httpx
 class AAP2Client:
     """Async client for AAP2 Controller REST API."""
 
-    def __init__(self, base_url: str, username: str, password: str, organization: str = ""):
+    def __init__(
+        self,
+        base_url: str,
+        username: str,
+        password: str,
+        organization: str = "",
+        api_prefix: str = "/api/controller/v2",
+    ):
         self._base_url = base_url.rstrip("/")
+        self._api = api_prefix.rstrip("/")
         self._organization = organization
         credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
         self._headers = {
@@ -22,30 +33,30 @@ class AAP2Client:
         }
 
     async def get_job(self, job_id: int) -> dict:
-        """GET /api/v2/jobs/{id}/ — retrieve job metadata."""
+        """Retrieve job metadata."""
         async with httpx.AsyncClient() as http:
             resp = await http.get(
-                f"{self._base_url}/api/v2/jobs/{job_id}/",
+                f"{self._base_url}{self._api}/jobs/{job_id}/",
                 headers=self._headers,
             )
             resp.raise_for_status()
             return resp.json()
 
     async def get_job_stdout(self, job_id: int) -> str:
-        """GET /api/v2/jobs/{id}/stdout/?format=txt — raw stdout text."""
+        """Retrieve raw stdout text for a job."""
         async with httpx.AsyncClient() as http:
             resp = await http.get(
-                f"{self._base_url}/api/v2/jobs/{job_id}/stdout/?format=txt",
+                f"{self._base_url}{self._api}/jobs/{job_id}/stdout/?format=txt",
                 headers=self._headers,
             )
             resp.raise_for_status()
             return resp.text
 
     async def get_job_events(self, job_id: int) -> list[dict]:
-        """GET /api/v2/jobs/{id}/job_events/ — failed events only."""
+        """Retrieve failed events for a job."""
         async with httpx.AsyncClient() as http:
             resp = await http.get(
-                f"{self._base_url}/api/v2/jobs/{job_id}/job_events/",
+                f"{self._base_url}{self._api}/jobs/{job_id}/job_events/",
                 params={"event": "runner_on_failed", "page_size": 50},
                 headers=self._headers,
             )
@@ -53,10 +64,10 @@ class AAP2Client:
             return resp.json()["results"]
 
     async def get_job_template(self, template_id: int) -> dict:
-        """GET /api/v2/job_templates/{id}/ — template details."""
+        """Retrieve job template details."""
         async with httpx.AsyncClient() as http:
             resp = await http.get(
-                f"{self._base_url}/api/v2/job_templates/{template_id}/",
+                f"{self._base_url}{self._api}/job_templates/{template_id}/",
                 headers=self._headers,
             )
             resp.raise_for_status()
@@ -77,7 +88,7 @@ class AAP2Client:
         if not self._organization:
             return None
         resp = await http.get(
-            f"{self._base_url}/api/v2/organizations/",
+            f"{self._base_url}{self._api}/organizations/",
             params={"name": self._organization},
             headers=self._headers,
         )
@@ -99,7 +110,7 @@ class AAP2Client:
 
             # Check existing templates
             resp = await http.get(
-                f"{self._base_url}/api/v2/notification_templates/",
+                f"{self._base_url}{self._api}/notification_templates/",
                 params={"page_size": 100},
                 headers=self._headers,
             )
@@ -124,7 +135,7 @@ class AAP2Client:
                 },
             }
             resp = await http.post(
-                f"{self._base_url}/api/v2/notification_templates/",
+                f"{self._base_url}{self._api}/notification_templates/",
                 json=body,
                 headers=self._headers,
             )
