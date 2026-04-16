@@ -9,12 +9,14 @@ Wires together:
 
 import json
 import logging
+import os
 from pathlib import Path
 
 import yaml
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 from langchain_core.messages import AIMessage
+from langchain_openai import ChatOpenAI
 
 from athena.agents.tools import web_search
 from athena.config import Settings
@@ -42,7 +44,9 @@ def load_subagents(config_path: Path) -> list[dict]:
             "system_prompt": spec["system_prompt"],
         }
         if "model" in spec:
-            subagent["model"] = spec["model"]
+            # Strip provider prefix (e.g. "openai:claude-sonnet-4-6" -> "claude-sonnet-4-6")
+            model_name = spec["model"].split(":")[-1] if ":" in spec["model"] else spec["model"]
+            subagent["model"] = _make_maas_model(model_name)
         if "tools" in spec:
             subagent["tools"] = [available_tools[t] for t in spec["tools"]]
         if "skills" in spec:
@@ -52,16 +56,27 @@ def load_subagents(config_path: Path) -> list[dict]:
     return subagents
 
 
+def _make_maas_model(model_name: str = "claude-sonnet-4-6") -> ChatOpenAI:
+    """Create a ChatOpenAI instance pointing at the MaaS gateway.
+
+    Uses the classic Chat Completions API (not the newer Responses API)
+    for compatibility with LiteLLM-based MaaS gateways.
+    """
+    return ChatOpenAI(
+        model=model_name,
+        openai_api_base=os.environ.get("OPENAI_API_BASE"),
+        openai_api_key=os.environ.get("OPENAI_API_KEY"),
+        use_responses_api=False,
+    )
+
+
 def create_ops_manager(settings: Settings):
     """Create the ops_manager Deep Agent configured by filesystem files.
 
-    The MaaS gateway (OpenAI-compatible) is configured via environment variables:
-    - OPENAI_API_BASE / OPENAI_BASE_URL → litellm_api_base_url
-    - OPENAI_API_KEY → litellm_virtual_key
-    These are set in app.py lifespan before this function is called.
+    The MaaS gateway is configured via environment variables set in app.py lifespan.
     """
     return create_deep_agent(
-        model="openai:claude-sonnet-4-6",
+        model=_make_maas_model("claude-sonnet-4-6"),
         memory=["./AGENTS.md"],
         tools=[],
         subagents=load_subagents(PROJECT_DIR / "subagents.yaml"),
