@@ -61,6 +61,7 @@ def create_ops_manager(settings: Settings):
     These are set in app.py lifespan before this function is called.
     """
     return create_deep_agent(
+        model="openai:claude-sonnet-4-6",
         memory=["./AGENTS.md"],
         tools=[],
         subagents=load_subagents(PROJECT_DIR / "subagents.yaml"),
