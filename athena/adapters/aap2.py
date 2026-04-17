@@ -101,41 +101,47 @@ class AAP2Client:
     async def register_webhook(self, target_url: str) -> int:
         """Ensure a notification template exists and is attached to all job templates.
 
-        Idempotent: if a template already points at target_url, reuses it.
-        Attaches the template as a failure notification on all job templates in the org.
+        Idempotent: finds existing template by name, creates if missing, updates URL
+        if changed. Attaches as failure notification on all job templates in the org.
         Returns the template ID.
         """
+        template_name = "athena-webhook"
         async with httpx.AsyncClient() as http:
             org_id = await self._resolve_organization_id(http)
 
-            # Check existing templates
             resp = await http.get(
                 f"{self._base_url}{self._api}/notification_templates/",
-                params={"page_size": 100},
+                params={"name": template_name, "page_size": 100},
                 headers=self._headers,
             )
             resp.raise_for_status()
             templates = resp.json()["results"]
 
+            notification_config = {
+                "url": target_url,
+                "http_method": "POST",
+                "headers": {"Content-Type": "application/json"},
+            }
+
             template_id = None
             for tpl in templates:
-                config = tpl.get("notification_configuration", {})
-                if config.get("url") == target_url:
+                if tpl.get("summary_fields", {}).get("organization", {}).get("id") == org_id:
                     template_id = tpl["id"]
+                    if tpl.get("notification_configuration", {}).get("url") != target_url:
+                        await http.patch(
+                            f"{self._base_url}{self._api}/notification_templates/{template_id}/",
+                            json={"notification_configuration": notification_config},
+                            headers=self._headers,
+                        )
                     break
 
             if template_id is None:
-                # Create new template scoped to the user's organization
                 body = {
-                    "name": "athena-webhook",
+                    "name": template_name,
                     "description": "Athena AIOps failure notification webhook",
                     "organization": org_id,
                     "notification_type": "webhook",
-                    "notification_configuration": {
-                        "url": target_url,
-                        "http_method": "POST",
-                        "headers": {"Content-Type": "application/json"},
-                    },
+                    "notification_configuration": notification_config,
                 }
                 resp = await http.post(
                     f"{self._base_url}{self._api}/notification_templates/",
@@ -145,7 +151,6 @@ class AAP2Client:
                 resp.raise_for_status()
                 template_id = resp.json()["id"]
 
-            # Attach to all job templates in the org as failure notification
             await self._attach_to_job_templates(http, template_id)
 
             return template_id

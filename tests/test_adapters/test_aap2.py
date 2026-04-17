@@ -74,26 +74,22 @@ async def test_get_job_events_filters_failed(
 async def test_register_webhook_creates_when_missing(
     client: AAP2Client, httpx_mock: pytest_httpx.HTTPXMock
 ):
-    # List existing templates — none match
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/controller/v2/notification_templates/?page_size=100",
+        url="https://aap2.example.com/api/controller/v2/notification_templates/?name=athena-webhook&page_size=100",
         method="GET",
         json={"results": []},
     )
-    # Create notification template
     httpx_mock.add_response(
         url="https://aap2.example.com/api/controller/v2/notification_templates/",
         method="POST",
         json={"id": 1, "name": "athena-webhook"},
         status_code=201,
     )
-    # List job templates for attachment
     httpx_mock.add_response(
         url="https://aap2.example.com/api/controller/v2/job_templates/?page_size=100",
         method="GET",
         json={"results": [{"id": 10, "name": "test-jt"}]},
     )
-    # Attach notification to job template
     httpx_mock.add_response(
         url="https://aap2.example.com/api/controller/v2/job_templates/10/notification_templates_error/",
         method="POST",
@@ -105,17 +101,18 @@ async def test_register_webhook_creates_when_missing(
     assert template_id == 1
 
 
-async def test_register_webhook_skips_when_exists(
+async def test_register_webhook_reuses_existing(
     client: AAP2Client, httpx_mock: pytest_httpx.HTTPXMock
 ):
     httpx_mock.add_response(
-        url="https://aap2.example.com/api/controller/v2/notification_templates/?page_size=100",
+        url="https://aap2.example.com/api/controller/v2/notification_templates/?name=athena-webhook&page_size=100",
         method="GET",
         json={
             "results": [
                 {
                     "id": 99,
                     "name": "athena-webhook",
+                    "summary_fields": {"organization": {"id": None}},
                     "notification_configuration": {
                         "url": "https://athena.example.com/api/v1/webhook/aap2"
                     },
@@ -123,7 +120,6 @@ async def test_register_webhook_skips_when_exists(
             ]
         },
     )
-    # List job templates for attachment
     httpx_mock.add_response(
         url="https://aap2.example.com/api/controller/v2/job_templates/?page_size=100",
         method="GET",
