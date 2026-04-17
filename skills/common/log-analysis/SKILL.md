@@ -1,3 +1,8 @@
+---
+name: log-analysis
+description: Shared skill for parsing Ansible/AAP2 job stdout
+---
+
 # Log Analysis
 
 Shared skill for parsing Ansible/AAP2 job output. Use this before domain-specific analysis.
