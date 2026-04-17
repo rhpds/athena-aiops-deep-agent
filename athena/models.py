@@ -7,7 +7,7 @@ https://github.com/tonykay/kira/blob/main/docs/api/openapi.yaml
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # --- Agent domain → Kira area mapping ---
 
@@ -66,6 +66,16 @@ class IssuePayload(BaseModel):
     severity: Literal["critical", "high", "medium", "low", "info"]
 
 
+_STAGE_ALIASES: dict[str, str] = {
+    "development": "dev",
+    "develop": "dev",
+    "testing": "test",
+    "staging": "test",
+    "stage": "test",
+    "prod": "production",
+}
+
+
 class TicketPayload(BaseModel):
     title: str
     description: str
@@ -77,3 +87,8 @@ class TicketPayload(BaseModel):
     affected_systems: list[str] = Field(default_factory=list)
     skills: list[str] = Field(default_factory=list)
     issues: list[IssuePayload] = Field(default_factory=list)
+
+    @field_validator("stage", mode="before")
+    @classmethod
+    def normalize_stage(cls, v: str) -> str:
+        return _STAGE_ALIASES.get(v.lower(), v.lower()) if isinstance(v, str) else v
