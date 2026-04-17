@@ -127,12 +127,6 @@ class AAP2Client:
             for tpl in templates:
                 if tpl.get("summary_fields", {}).get("organization", {}).get("id") == org_id:
                     template_id = tpl["id"]
-                    if tpl.get("notification_configuration", {}).get("url") != target_url:
-                        await http.patch(
-                            f"{self._base_url}{self._api}/notification_templates/{template_id}/",
-                            json={"notification_configuration": notification_config},
-                            headers=self._headers,
-                        )
                     break
 
             if template_id is None:
