@@ -64,6 +64,7 @@ class IssuePayload(BaseModel):
     title: str
     description: str
     severity: Literal["critical", "high", "medium", "low", "info"]
+    fix: str = ""
 
 
 _STAGE_ALIASES: dict[str, str] = {

@@ -65,6 +65,7 @@ class KiraClient:
             "title": issue.title,
             "description": issue.description,
             "severity": issue.severity,
+            "fix": issue.fix,
         }
         async with httpx.AsyncClient() as http:
             resp = await http.post(
