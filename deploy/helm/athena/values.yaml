@@ -1,5 +1,5 @@
 image:
-  repository: quay.io/tonykay/athena-aiops
+  repository: quay.io/rhpds/athena-aiops
   tag: latest
   pullPolicy: Always
 
@@ -39,8 +39,9 @@ agentConfig:
   opsManagerModel: "openai/claude-sonnet-4-6"
   specialistModel: "openai/claude-sonnet-4-6"
   reviewerModel: "openai/claude-3-5-haiku"
-  # Optional: override AGENTS.md and subagents.yaml baked into the image
-  # Use --set-file agentConfig.agentsMd=./AGENTS.md to override
+  # AGENTS.md and subagents.yaml content for the athena-agent-config ConfigMap.
+  # The deployer role provides these from the cloned repo.
+  # For manual helm install: --set-file agentConfig.agentsMd=./AGENTS.md
   agentsMd: ""
   subagentsYaml: ""
 
