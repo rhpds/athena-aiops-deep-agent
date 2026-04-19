@@ -19,11 +19,14 @@ spec:
         - name: init-skills
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            runAsUser: 0
           command: ["sh", "-c"]
           args:
             - |
               if [ -z "$(ls /mnt/skills 2>/dev/null | grep -v lost+found)" ]; then
                 cp -r /app/skills-default/* /mnt/skills/
+                chown -R 1001:0 /mnt/skills/
                 echo "Skills initialized from image defaults"
               else
                 echo "Skills PVC already populated, skipping"
