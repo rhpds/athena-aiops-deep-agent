@@ -67,6 +67,7 @@ def _make_maas_model(model_name: str = "claude-sonnet-4-6") -> ChatOpenAI:
         openai_api_base=os.environ.get("OPENAI_API_BASE"),
         openai_api_key=os.environ.get("OPENAI_API_KEY"),
         use_responses_api=False,
+        max_retries=3,
     )
 
 

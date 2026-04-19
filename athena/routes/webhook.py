@@ -1,5 +1,6 @@
 """AAP2 webhook receiver — POST /api/v1/webhook/aap2."""
 
+import asyncio
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Request, Response
@@ -11,25 +12,46 @@ from athena.services.submission import submit_ticket
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+PIPELINE_MAX_RETRIES = 3
+PIPELINE_RETRY_BASE_DELAY = 5  # seconds
+
 
 async def _process_webhook(job_id: int, state: State):
-    """Background task: ingest, analyze, submit."""
+    """Background task: ingest, analyze, submit — with retry on transient errors."""
     from athena.agents.pipeline import run_pipeline
 
-    try:
-        envelope = await build_incident_envelope(state.aap2, job_id=job_id)
-        ticket_payload = await run_pipeline(envelope, state.settings)
-        await submit_ticket(
-            payload=ticket_payload,
-            kira=state.kira,
-            rocketchat=state.rocketchat,
-            kira_frontend_url=state.settings.kira_frontend_url or state.settings.kira_url,
-            rocketchat_channel=state.settings.rocketchat_channel,
-            job_name=envelope.job.name,
-        )
-        logger.info("Ticket created for job %s", job_id)
-    except Exception:
-        logger.exception("Pipeline failed for job %s", job_id)
+    for attempt in range(1, PIPELINE_MAX_RETRIES + 1):
+        try:
+            envelope = await build_incident_envelope(state.aap2, job_id=job_id)
+            ticket_payload = await run_pipeline(envelope, state.settings)
+            await submit_ticket(
+                payload=ticket_payload,
+                kira=state.kira,
+                rocketchat=state.rocketchat,
+                kira_frontend_url=state.settings.kira_frontend_url or state.settings.kira_url,
+                rocketchat_channel=state.settings.rocketchat_channel,
+                job_name=envelope.job.name,
+            )
+            logger.info("Ticket created for job %s", job_id)
+            return
+        except Exception as exc:
+            if attempt < PIPELINE_MAX_RETRIES:
+                delay = PIPELINE_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "Pipeline attempt %d/%d failed for job %s (%s), retrying in %ds",
+                    attempt,
+                    PIPELINE_MAX_RETRIES,
+                    job_id,
+                    exc,
+                    delay,
+                )
+                await asyncio.sleep(delay)
+            else:
+                logger.exception(
+                    "Pipeline failed for job %s after %d attempts",
+                    job_id,
+                    PIPELINE_MAX_RETRIES,
+                )
 
 
 @router.post("/api/v1/webhook/aap2", status_code=202)
