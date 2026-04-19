@@ -22,7 +22,7 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              if [ -z "$(ls -A /mnt/skills 2>/dev/null)" ]; then
+              if [ -z "$(ls /mnt/skills 2>/dev/null | grep -v lost+found)" ]; then
                 cp -r /app/skills-default/* /mnt/skills/
                 echo "Skills initialized from image defaults"
               else
