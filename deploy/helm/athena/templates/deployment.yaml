@@ -14,6 +14,24 @@ spec:
       labels:
         {{- include "athena.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if .Values.skills.persistence.enabled }}
+      initContainers:
+        - name: init-skills
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              if [ -z "$(ls -A /mnt/skills 2>/dev/null)" ]; then
+                cp -r /app/skills-default/* /mnt/skills/
+                echo "Skills initialized from image defaults"
+              else
+                echo "Skills PVC already populated, skipping"
+              fi
+          volumeMounts:
+            - name: skills
+              mountPath: /mnt/skills
+      {{- end }}
       containers:
         - name: athena
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -98,11 +116,13 @@ spec:
             - name: config
               mountPath: /app/AGENTS.md
               subPath: AGENTS.md
+              readOnly: true
             {{- end }}
             {{- if .Values.agentConfig.subagentsYaml }}
             - name: config
               mountPath: /app/subagents.yaml
               subPath: subagents.yaml
+              readOnly: true
             {{- end }}
             {{- if .Values.skills.persistence.enabled }}
             - name: skills
@@ -112,7 +132,7 @@ spec:
         {{- if or .Values.agentConfig.agentsMd .Values.agentConfig.subagentsYaml }}
         - name: config
           configMap:
-            name: {{ include "athena.fullname" . }}-config
+            name: athena-agent-config
         {{- end }}
         {{- if .Values.skills.persistence.enabled }}
         - name: skills
