@@ -13,6 +13,7 @@ RUN uv sync --no-dev --no-install-project
 COPY athena/ athena/
 COPY AGENTS.md subagents.yaml ./
 COPY skills/ skills/
+COPY skills/ skills-default/
 COPY templates/ templates/
 
 # Install the project itself
