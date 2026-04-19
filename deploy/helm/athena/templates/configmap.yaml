@@ -1,7 +1,8 @@
+{{- if or .Values.agentConfig.agentsMd .Values.agentConfig.subagentsYaml }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "athena.fullname" . }}-config
+  name: athena-agent-config
   labels:
     {{- include "athena.labels" . | nindent 4 }}
 data:
@@ -13,3 +14,4 @@ data:
   subagents.yaml: |
     {{- .Values.agentConfig.subagentsYaml | nindent 4 }}
   {{- end }}
+{{- end }}
