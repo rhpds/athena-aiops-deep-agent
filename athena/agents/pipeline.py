@@ -62,8 +62,11 @@ def _make_maas_model(model_name: str = "claude-sonnet-4-6") -> ChatOpenAI:
     Uses the classic Chat Completions API (not the newer Responses API)
     for compatibility with LiteLLM-based MaaS gateways.
     """
+    # Strip provider prefix (e.g. "openai/claude-sonnet-4-6" -> "claude-sonnet-4-6")
+    bare_name = model_name.split("/")[-1] if "/" in model_name else model_name
+    bare_name = bare_name.split(":")[-1] if ":" in bare_name else bare_name
     return ChatOpenAI(
-        model=model_name,
+        model=bare_name,
         openai_api_base=os.environ.get("OPENAI_API_BASE"),
         openai_api_key=os.environ.get("OPENAI_API_KEY"),
         use_responses_api=False,
