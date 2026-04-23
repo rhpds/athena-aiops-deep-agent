@@ -142,6 +142,16 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
     ticket_data = _extract_json(content)
     ticket = TicketPayload(**ticket_data)
 
+    # Infer agent name from area if the LLM didn't report it
+    if not ticket.agent_name:
+        _AREA_TO_AGENT = {
+            "linux": "sre_linux",
+            "application": "sre_ansible",
+            "kubernetes": "sre_openshift",
+            "networking": "sre_networking",
+        }
+        ticket.agent_name = _AREA_TO_AGENT.get(ticket.area, "")
+
     # Inject model metadata if the agent reported its name
     if ticket.agent_name and not ticket.model_name:
         try:
