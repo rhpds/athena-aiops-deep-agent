@@ -86,6 +86,9 @@ spec:
               value: {{ .Values.rocketchat.apiUserId | quote }}
             - name: ROCKETCHAT_CHANNEL
               value: {{ .Values.rocketchat.channel | quote }}
+            # Agent models
+            - name: OPS_MANAGER_MODEL
+              value: {{ .Values.agentConfig.opsManagerModel | quote }}
             # MaaS (LLM gateway)
             - name: LITELLM_API_BASE_URL
               value: {{ .Values.maas.apiBaseUrl | quote }}

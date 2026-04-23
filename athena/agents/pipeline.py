@@ -77,7 +77,7 @@ def create_ops_manager(settings: Settings):
     The MaaS gateway is configured via environment variables set in app.py lifespan.
     """
     return create_deep_agent(
-        model=_make_maas_model("claude-sonnet-4-6"),
+        model=_make_maas_model(os.environ.get("OPS_MANAGER_MODEL", "claude-sonnet-4-6")),
         memory=["./AGENTS.md"],
         tools=[],
         subagents=load_subagents(PROJECT_DIR / "subagents.yaml"),
