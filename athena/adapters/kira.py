@@ -48,6 +48,10 @@ class KiraClient:
             "skills": payload.skills,
             "created_by_source": "agent",
         }
+        if payload.agent_name:
+            body["agent_name"] = payload.agent_name
+        if payload.model_name:
+            body["model_name"] = payload.model_name
         async with httpx.AsyncClient() as http:
             resp = await http.post(
                 f"{self._base_url}/api/v1/tickets",

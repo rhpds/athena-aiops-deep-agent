@@ -29,3 +29,4 @@ Structure your analysis output as a TicketPayload for submission to Kira.
 8. **affected_systems**: List system names from the job output (hostnames, services, namespaces)
 9. **skills**: List expertise areas needed to resolve (e.g., ["ansible", "linux"], ["kubernetes", "networking"])
 10. **issues**: Create a sub-issue for each distinct problem found. Each has title, description, severity.
+11. **agent_name**: Your agent identifier (e.g., "sre_linux", "sre_openshift", "sre_networking", "sre_ansible", "sre_ssh"). This is used for traceability — always include it.

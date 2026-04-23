@@ -140,7 +140,23 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
 
     # Parse JSON from the agent response
     ticket_data = _extract_json(content)
-    return TicketPayload(**ticket_data)
+    ticket = TicketPayload(**ticket_data)
+
+    # Inject model metadata if the agent reported its name
+    if ticket.agent_name and not ticket.model_name:
+        try:
+            with open(PROJECT_DIR / "subagents.yaml") as f:
+                all_agents = yaml.safe_load(f)
+            agent_spec = all_agents.get(ticket.agent_name, {})
+            if "model" in agent_spec:
+                raw = agent_spec["model"]
+                bare = raw.split("/")[-1] if "/" in raw else raw
+                bare = bare.split(":")[-1] if ":" in bare else bare
+                ticket.model_name = bare
+        except Exception:
+            pass
+
+    return ticket
 
 
 def _extract_json(text: str) -> dict:

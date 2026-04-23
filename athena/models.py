@@ -88,6 +88,8 @@ class TicketPayload(BaseModel):
     affected_systems: list[str] = Field(default_factory=list)
     skills: list[str] = Field(default_factory=list)
     issues: list[IssuePayload] = Field(default_factory=list)
+    agent_name: str = ""
+    model_name: str = ""
 
     @field_validator("stage", mode="before")
     @classmethod
