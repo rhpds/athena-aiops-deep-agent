@@ -58,7 +58,7 @@ AAP2 webhook → athena service → ops_manager (main agent)
                                     ├── sre_ansible     (playbook/role/collection/credential)
                                     ├── sre_linux       (dnf/systemd/SELinux/filesystem/Satellite)
                                     ├── sre_openshift   (pod/image/RBAC/operator/networking)
-                                    └── sre_networking  (DNS/SSH/proxy/TLS/routing)
+                                    └── sre_networking  (DNS/proxy/TLS/routing/firewall)
 
 ops_manager → reviewer (validates ticket quality on Haiku)
            → returns TicketPayload (structured output)

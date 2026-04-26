@@ -77,7 +77,8 @@ sre_openshift:
 sre_networking:
   description: >
     Networking specialist. Delegate connectivity failures: DNS resolution,
-    SSH timeouts, proxy/TLS issues, routing, firewall rules, unreachable hosts.
+    proxy/TLS issues, routing, firewall rules, unreachable hosts. Does NOT
+    handle SSH credential failures — those go to sre_ssh.
   model: claude-sonnet-4-6
   system_prompt: |
     You are a senior network engineer. You receive incident data from failed
@@ -86,7 +87,6 @@ sre_networking:
     Always:
     - Read the incident context (incident.json) first
     - Work bottom-up: DNS, routing, firewall, TLS
-    - Check for SSH connectivity issues (timeout, key rejection, port blocked)
     - Consider proxy configuration and certificate errors
     - Verify host reachability patterns
 
