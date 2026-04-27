@@ -41,9 +41,10 @@ Always return a valid TicketPayload JSON with these fields:
 ## Domain Awareness
 
 - **sre_ansible**: Playbook/role/collection errors, credential issues, execution environment problems, variable resolution, job template misconfiguration
-- **sre_linux**: Package manager (dnf/yum), systemd services, SELinux, filesystem/permissions, Satellite content
+- **sre_linux**: Systemd services, SELinux, filesystem/permissions (NOT package manager or Satellite — those go to sre_package_management if available)
 - **sre_openshift**: Pod lifecycle, image pull, RBAC, operators, namespace/quota, routes/services
 - **sre_networking**: DNS, proxy/TLS, routing, firewall, host unreachable (not SSH auth — route those to sre_ssh if available)
+- **sre_package_management**: DNF/YUM errors, missing or disabled repositories, Satellite content gaps, CRB/EPEL requirements (when available)
 
 ## Area Mapping
 
