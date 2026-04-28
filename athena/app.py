@@ -1,5 +1,6 @@
 """FastAPI application with lifespan for client initialization and webhook registration."""
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -54,6 +55,7 @@ async def lifespan(app: FastAPI):
     app.state.aap2 = aap2
     app.state.kira = kira
     app.state.rocketchat = rocketchat
+    app.state.active_pipelines: set[asyncio.Task] = set()
 
     # Register webhook in AAP2 (idempotent)
     try:
@@ -66,6 +68,13 @@ async def lifespan(app: FastAPI):
         logger.exception("Failed to register AAP2 webhook — readiness probe will fail")
 
     yield
+
+    if app.state.active_pipelines:
+        logger.info(
+            "Shutdown: waiting for %d in-flight pipeline(s) to complete (max 5 min)...",
+            len(app.state.active_pipelines),
+        )
+        await asyncio.wait(app.state.active_pipelines, timeout=300)
 
 
 app = FastAPI(
