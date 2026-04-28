@@ -6,6 +6,8 @@ metadata:
     {{- include "athena.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "athena.selectorLabels" . | nindent 6 }}
