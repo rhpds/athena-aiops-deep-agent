@@ -143,19 +143,34 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
     ticket_data = _extract_json(content)
     ticket = TicketPayload(**ticket_data)
 
-    # Inject model metadata if the agent reported its name
-    if ticket.agent_name and not ticket.model_name:
-        try:
-            with open(PROJECT_DIR / "subagents.yaml") as f:
-                all_agents = yaml.safe_load(f)
+    # Dynamic agent_name fallback and model_name injection from subagents.yaml.
+    # subagents.yaml is ConfigMap-mounted — no image change needed for new SREs.
+    try:
+        with open(PROJECT_DIR / "subagents.yaml") as f:
+            all_agents = yaml.safe_load(f)
+
+        if not ticket.agent_name:
+            # Build area → [agent_names] from the `area:` field each agent declares.
+            # Only assign when exactly one agent owns the area; two agents on the same
+            # area (e.g. sre_linux + sre_package_management both use "linux") means
+            # the LLM must self-report via the create-ticket skill.
+            area_map: dict[str, list[str]] = {}
+            for name, spec in all_agents.items():
+                if a := spec.get("area"):
+                    area_map.setdefault(a, []).append(name)
+            candidates = area_map.get(ticket.area, [])
+            if len(candidates) == 1:
+                ticket.agent_name = candidates[0]
+
+        if ticket.agent_name and not ticket.model_name:
             agent_spec = all_agents.get(ticket.agent_name, {})
             if "model" in agent_spec:
                 raw = agent_spec["model"]
                 bare = raw.split("/")[-1] if "/" in raw else raw
                 bare = bare.split(":")[-1] if ":" in bare else bare
                 ticket.model_name = bare
-        except Exception:
-            pass
+    except Exception:
+        pass
 
     return ticket
 
