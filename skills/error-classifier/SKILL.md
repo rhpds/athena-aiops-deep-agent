@@ -14,5 +14,11 @@ Classify the failure domain from an AAP2 job failure incident.
 3. **Resolve** ambiguity: if signals span multiple domains, identify the root cause domain. Example: "Ansible task failed because DNS lookup timed out" → networking (not ansible). "Ansible task failed because package not found" → package_management (not ansible)
 4. **Emit** classification:
    - `domain`: one of ansible, linux, package_management, openshift, networking
+   - `delegate_to`: the exact subagent name to call — use this mapping:
+     - ansible → `sre_ansible`
+     - linux → `sre_linux`
+     - package_management → `sre_package_management`
+     - openshift → `sre_openshift`
+     - networking → `sre_networking`
    - `confidence`: 0-100 based on signal strength
    - `rationale`: one sentence explaining why this domain was chosen
