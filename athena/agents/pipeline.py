@@ -71,7 +71,7 @@ def _make_maas_model(model_name: str = "claude-sonnet-4-6") -> ChatOpenAI:
         openai_api_key=os.environ.get("OPENAI_API_KEY"),
         use_responses_api=False,
         request_timeout=90,  # fail fast on hanging MaaS connections
-        max_retries=0,  # outer retry loop in webhook.py handles pipeline-level retries
+        max_retries=1,  # one retry handles stale keepalive connections; outer loop handles sustained outages
     )
 
 
