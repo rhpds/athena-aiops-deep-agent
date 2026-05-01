@@ -188,10 +188,19 @@ def _extract_json(text: str) -> dict:
     if match:
         return json.loads(match.group(1))
 
-    # Try raw JSON
-    start = text.find("{")
+    # Try raw JSON — scan for the outermost valid JSON object.
+    # The LLM often prefixes the JSON with a markdown summary table whose
+    # cells contain '{' characters that aren't the real payload.
     end = text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        return json.loads(text[start : end + 1])
+    if end != -1:
+        pos = 0
+        while True:
+            start = text.find("{", pos)
+            if start == -1 or start >= end:
+                break
+            try:
+                return json.loads(text[start : end + 1])
+            except json.JSONDecodeError:
+                pos = start + 1
 
     raise ValueError(f"Could not extract JSON from agent output: {text[:200]}")
