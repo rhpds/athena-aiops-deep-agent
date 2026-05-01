@@ -117,6 +117,7 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
     )
 
     final_message = None
+    delegated_to: str = ""
     async for chunk in agent.astream(
         {"messages": [("user", incident_summary)]},
         config={"configurable": {"thread_id": f"incident-{envelope.event_id}"}},
@@ -124,6 +125,11 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
     ):
         if "messages" in chunk:
             messages = chunk["messages"]
+            for msg in messages:
+                if isinstance(msg, AIMessage) and msg.tool_calls:
+                    for tc in msg.tool_calls:
+                        if tc.get("name") == "task":
+                            delegated_to = tc.get("args", {}).get("subagent_type", "")
             if messages:
                 last = messages[-1]
                 if isinstance(last, AIMessage) and last.content:
@@ -151,17 +157,16 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
             all_agents = yaml.safe_load(f)
 
         if not ticket.agent_name:
-            # Build area → [agent_names] from the `area:` field each agent declares.
-            # Only assign when exactly one agent owns the area; two agents on the same
-            # area (e.g. sre_linux + sre_package_management both use "linux") means
-            # the LLM must self-report via the create-ticket skill.
-            area_map: dict[str, list[str]] = {}
-            for name, spec in all_agents.items():
-                if a := spec.get("area"):
-                    area_map.setdefault(a, []).append(name)
-            candidates = area_map.get(ticket.area, [])
-            if len(candidates) == 1:
-                ticket.agent_name = candidates[0]
+            if delegated_to and delegated_to in all_agents:
+                ticket.agent_name = delegated_to
+            else:
+                area_map: dict[str, list[str]] = {}
+                for name, spec in all_agents.items():
+                    if a := spec.get("area"):
+                        area_map.setdefault(a, []).append(name)
+                candidates = area_map.get(ticket.area, [])
+                if len(candidates) == 1:
+                    ticket.agent_name = candidates[0]
 
         if ticket.agent_name and not ticket.model_name:
             agent_spec = all_agents.get(ticket.agent_name, {})
