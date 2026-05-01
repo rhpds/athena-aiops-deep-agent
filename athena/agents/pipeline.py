@@ -128,8 +128,10 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
             for msg in messages:
                 if isinstance(msg, AIMessage) and msg.tool_calls:
                     for tc in msg.tool_calls:
-                        if tc.get("name") == "task":
-                            delegated_to = tc.get("args", {}).get("subagent_type", "")
+                        if tc.get("name") == "task" and not delegated_to:
+                            sub = tc.get("args", {}).get("subagent_type", "")
+                            if sub and sub != "reviewer":
+                                delegated_to = sub
             if messages:
                 last = messages[-1]
                 if isinstance(last, AIMessage) and last.content:
