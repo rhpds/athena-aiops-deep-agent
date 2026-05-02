@@ -33,6 +33,16 @@ async def lifespan(app: FastAPI):
     if settings.tavily_api_key:
         os.environ["TAVILY_API_KEY"] = settings.tavily_api_key.get_secret_value()
 
+    # LangFuse tracing (opt-in)
+    if settings.langfuse_secret_key:
+        os.environ["LANGFUSE_SECRET_KEY"] = settings.langfuse_secret_key.get_secret_value()
+        os.environ["LANGFUSE_PUBLIC_KEY"] = settings.langfuse_public_key or ""
+        os.environ["LANGFUSE_HOST"] = settings.langfuse_host or ""
+        from langfuse.callback import CallbackHandler
+        langfuse_handler = CallbackHandler()
+        langfuse_handler.auth_check()
+        logger.info("LangFuse tracing enabled → %s", settings.langfuse_host)
+
     # Initialize adapter clients
     aap2 = AAP2Client(
         base_url=settings.aap2_url,
