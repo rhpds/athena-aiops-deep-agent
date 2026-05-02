@@ -36,3 +36,8 @@ class Settings(BaseSettings):
     # Athena service
     athena_webhook_path: str = "/api/v1/webhook/aap2"
     athena_base_url: str | None = None
+
+    # LangFuse tracing (opt-in — if unset, no tracing)
+    langfuse_secret_key: SecretStr | None = None
+    langfuse_public_key: str | None = None
+    langfuse_host: str | None = None
