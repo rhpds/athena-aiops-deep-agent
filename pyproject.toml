@@ -17,6 +17,7 @@ dependencies = [
     "pyyaml",
     "rich",
     "jinja2",
+    "langfuse>=2.0",
 ]
 
 [project.optional-dependencies]
