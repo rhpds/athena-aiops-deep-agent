@@ -28,6 +28,11 @@ maas:
 tavily:
   apiKey: ""
 
+langfuse:
+  secretKey: ""
+  publicKey: ""
+  host: ""
+
 service:
   port: 8080
   type: ClusterIP

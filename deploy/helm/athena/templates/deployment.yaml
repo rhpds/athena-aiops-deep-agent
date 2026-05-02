@@ -112,6 +112,17 @@ spec:
               value: {{ .Values.athena.baseUrl | quote }}
             {{- end }}
             {{- end }}
+            {{- if .Values.langfuse.secretKey }}
+            - name: LANGFUSE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "athena.fullname" . }}
+                  key: langfuse-secret-key
+            - name: LANGFUSE_PUBLIC_KEY
+              value: {{ .Values.langfuse.publicKey | quote }}
+            - name: LANGFUSE_HOST
+              value: {{ .Values.langfuse.host | quote }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz
