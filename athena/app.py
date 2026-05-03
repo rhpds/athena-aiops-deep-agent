@@ -38,7 +38,9 @@ async def lifespan(app: FastAPI):
         os.environ["LANGFUSE_SECRET_KEY"] = settings.langfuse_secret_key.get_secret_value()
         os.environ["LANGFUSE_PUBLIC_KEY"] = settings.langfuse_public_key or ""
         os.environ["LANGFUSE_HOST"] = settings.langfuse_host or ""
+        from langfuse import get_client
         from langfuse.langchain import CallbackHandler
+        get_client()
         CallbackHandler()
         logger.info("LangFuse tracing enabled → %s", settings.langfuse_host)
 
