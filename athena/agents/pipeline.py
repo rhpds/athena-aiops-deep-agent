@@ -116,11 +116,19 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
         f"have the reviewer validate, and return a TicketPayload JSON."
     )
 
+    # Build config — include LangFuse callback if tracing is enabled
+    astream_config: dict = {"configurable": {"thread_id": f"incident-{envelope.event_id}"}}
+    try:
+        from langfuse.langchain import CallbackHandler
+        astream_config["callbacks"] = [CallbackHandler()]
+    except Exception:
+        pass
+
     final_message = None
     delegated_to: str = ""
     async for chunk in agent.astream(
         {"messages": [("user", incident_summary)]},
-        config={"configurable": {"thread_id": f"incident-{envelope.event_id}"}},
+        config=astream_config,
         stream_mode="values",
     ):
         if "messages" in chunk:
