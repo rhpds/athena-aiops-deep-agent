@@ -74,9 +74,10 @@ async def lifespan(app: FastAPI):
         target = f"{webhook_url.rstrip('/')}{settings.athena_webhook_path}"
         template_id = await aap2.register_webhook(target)
         logger.info("AAP2 webhook registered (template_id=%s)", template_id)
-        health.set_ready(True)
     except Exception:
-        logger.exception("Failed to register AAP2 webhook — readiness probe will fail")
+        logger.exception("Failed to register AAP2 webhook — will retry on first incoming request")
+
+    health.set_ready(True)
 
     yield
 
