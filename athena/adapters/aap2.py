@@ -34,7 +34,7 @@ class AAP2Client:
 
     async def get_job(self, job_id: int) -> dict:
         """Retrieve job metadata."""
-        async with httpx.AsyncClient() as http:
+        async with httpx.AsyncClient(timeout=30) as http:
             resp = await http.get(
                 f"{self._base_url}{self._api}/jobs/{job_id}/",
                 headers=self._headers,
@@ -44,7 +44,7 @@ class AAP2Client:
 
     async def get_job_stdout(self, job_id: int) -> str:
         """Retrieve raw stdout text for a job."""
-        async with httpx.AsyncClient() as http:
+        async with httpx.AsyncClient(timeout=30) as http:
             resp = await http.get(
                 f"{self._base_url}{self._api}/jobs/{job_id}/stdout/?format=txt",
                 headers=self._headers,
@@ -54,7 +54,7 @@ class AAP2Client:
 
     async def get_job_events(self, job_id: int) -> list[dict]:
         """Retrieve failed events for a job."""
-        async with httpx.AsyncClient() as http:
+        async with httpx.AsyncClient(timeout=30) as http:
             resp = await http.get(
                 f"{self._base_url}{self._api}/jobs/{job_id}/job_events/",
                 params={"event": "runner_on_failed", "page_size": 50},
@@ -65,7 +65,7 @@ class AAP2Client:
 
     async def get_job_template(self, template_id: int) -> dict:
         """Retrieve job template details."""
-        async with httpx.AsyncClient() as http:
+        async with httpx.AsyncClient(timeout=30) as http:
             resp = await http.get(
                 f"{self._base_url}{self._api}/job_templates/{template_id}/",
                 headers=self._headers,
@@ -106,7 +106,7 @@ class AAP2Client:
         Returns the template ID.
         """
         template_name = "athena-webhook"
-        async with httpx.AsyncClient() as http:
+        async with httpx.AsyncClient(timeout=30) as http:
             org_id = await self._resolve_organization_id(http)
 
             resp = await http.get(
