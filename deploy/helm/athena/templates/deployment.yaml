@@ -127,7 +127,7 @@ spec:
             httpGet:
               path: /healthz
               port: {{ .Values.service.port }}
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 3
           readinessProbe:
