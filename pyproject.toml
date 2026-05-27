@@ -18,6 +18,7 @@ dependencies = [
     "rich",
     "jinja2",
     "langfuse>=2.0",
+    "mlflow>=2.15",
 ]
 
 [project.optional-dependencies]
