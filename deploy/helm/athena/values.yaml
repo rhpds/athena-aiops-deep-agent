@@ -33,6 +33,10 @@ langfuse:
   publicKey: ""
   host: ""
 
+mlflow:
+  trackingUri: ""
+  experimentName: ""
+
 service:
   port: 8080
   type: ClusterIP

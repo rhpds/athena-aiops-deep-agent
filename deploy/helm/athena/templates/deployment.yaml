@@ -123,6 +123,12 @@ spec:
             - name: LANGFUSE_HOST
               value: {{ .Values.langfuse.host | quote }}
             {{- end }}
+            {{- if .Values.mlflow.trackingUri }}
+            - name: MLFLOW_TRACKING_URI
+              value: {{ .Values.mlflow.trackingUri | quote }}
+            - name: MLFLOW_EXPERIMENT_NAME
+              value: {{ .Values.mlflow.experimentName | quote }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz
