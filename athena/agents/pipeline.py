@@ -120,6 +120,7 @@ async def run_pipeline(envelope: IncidentEnvelope, settings: Settings) -> Ticket
     astream_config: dict = {"configurable": {"thread_id": f"incident-{envelope.event_id}"}}
     try:
         from langfuse.langchain import CallbackHandler
+
         astream_config["callbacks"] = [CallbackHandler()]
     except Exception:
         pass

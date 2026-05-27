@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
         os.environ["LANGFUSE_HOST"] = settings.langfuse_host or ""
         from langfuse import get_client
         from langfuse.langchain import CallbackHandler
+
         get_client()
         CallbackHandler()
         logger.info("LangFuse tracing enabled → %s", settings.langfuse_host)
@@ -47,6 +48,7 @@ async def lifespan(app: FastAPI):
     # MLflow tracing (opt-in)
     if settings.mlflow_tracking_uri:
         import mlflow
+
         mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
         mlflow.set_experiment(settings.mlflow_experiment_name or "athena-default")
         mlflow.langchain.autolog()
