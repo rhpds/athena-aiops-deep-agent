@@ -47,3 +47,23 @@ def test_settings_optional_tavily(monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv(k, v)
     settings = Settings()
     assert settings.tavily_api_key.get_secret_value() == "tvly-test"
+
+
+def test_settings_optional_mlflow_defaults_to_none(monkeypatch: pytest.MonkeyPatch):
+    env = _minimal_env()
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    settings = Settings()
+    assert settings.mlflow_tracking_uri is None
+    assert settings.mlflow_experiment_name is None
+
+
+def test_settings_optional_mlflow_set(monkeypatch: pytest.MonkeyPatch):
+    env = _minimal_env()
+    env["mlflow_tracking_uri"] = "http://mlflow:5000"
+    env["mlflow_experiment_name"] = "test-experiment"
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    settings = Settings()
+    assert settings.mlflow_tracking_uri == "http://mlflow:5000"
+    assert settings.mlflow_experiment_name == "test-experiment"

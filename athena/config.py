@@ -41,3 +41,7 @@ class Settings(BaseSettings):
     langfuse_secret_key: SecretStr | None = None
     langfuse_public_key: str | None = None
     langfuse_host: str | None = None
+
+    # MLflow tracing (opt-in — if unset, no tracing)
+    mlflow_tracking_uri: str | None = None
+    mlflow_experiment_name: str | None = None
