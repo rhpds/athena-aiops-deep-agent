@@ -128,12 +128,6 @@ spec:
               value: {{ .Values.mlflow.trackingUri | quote }}
             - name: MLFLOW_EXPERIMENT_NAME
               value: {{ .Values.mlflow.experimentName | quote }}
-            {{- if .Values.mlflow.username }}
-            - name: MLFLOW_TRACKING_USERNAME
-              value: {{ .Values.mlflow.username | quote }}
-            - name: MLFLOW_TRACKING_PASSWORD
-              value: {{ .Values.mlflow.password | quote }}
-            {{- end }}
             {{- end }}
           livenessProbe:
             httpGet:

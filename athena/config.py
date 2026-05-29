@@ -45,5 +45,3 @@ class Settings(BaseSettings):
     # MLflow tracing (opt-in — if unset, no tracing)
     mlflow_tracking_uri: str | None = None
     mlflow_experiment_name: str | None = None
-    mlflow_tracking_username: str | None = None
-    mlflow_tracking_password: str | None = None
