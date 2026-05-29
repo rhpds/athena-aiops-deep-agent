@@ -45,14 +45,17 @@ async def lifespan(app: FastAPI):
         CallbackHandler()
         logger.info("LangFuse tracing enabled → %s", settings.langfuse_host)
 
-    # MLflow tracing (opt-in)
+    # MLflow tracing (opt-in — must not block startup)
     if settings.mlflow_tracking_uri:
-        import mlflow
+        try:
+            import mlflow
 
-        mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
-        mlflow.set_experiment(settings.mlflow_experiment_name or "athena-default")
-        mlflow.langchain.autolog()
-        logger.info("MLflow tracing enabled → %s", settings.mlflow_tracking_uri)
+            mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
+            mlflow.set_experiment(settings.mlflow_experiment_name or "athena-default")
+            mlflow.langchain.autolog()
+            logger.info("MLflow tracing enabled → %s", settings.mlflow_tracking_uri)
+        except Exception:
+            logger.exception("MLflow tracing init failed — continuing without MLflow")
 
     # Initialize adapter clients
     aap2 = AAP2Client(
