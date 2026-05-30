@@ -36,6 +36,8 @@ langfuse:
 mlflow:
   trackingUri: ""
   experimentName: ""
+  username: ""
+  password: ""
 
 service:
   port: 8080
