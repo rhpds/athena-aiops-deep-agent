@@ -12,9 +12,9 @@ from athena.services.submission import submit_ticket
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-PIPELINE_MAX_RETRIES = 5
-PIPELINE_RETRY_BASE_DELAY = 10  # seconds; backoff: 10, 20, 40, 80 (~2.5 min window)
-PIPELINE_TIMEOUT = 180  # seconds; cancel and retry if LLM/MaaS connection hangs
+PIPELINE_MAX_RETRIES = 3
+PIPELINE_RETRY_BASE_DELAY = 10  # seconds; backoff: 10, 20
+PIPELINE_TIMEOUT = 600  # seconds; multi-agent pipeline makes 5+ LLM calls, each 30-90s
 ENVELOPE_TIMEOUT = 60  # seconds; cancel and retry if AAP2 artifact fetch hangs
 
 
