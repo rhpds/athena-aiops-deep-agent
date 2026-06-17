@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 PIPELINE_MAX_RETRIES = 5
 PIPELINE_RETRY_BASE_DELAY = 10  # seconds; backoff: 10, 20, 40, 80 (~2.5 min window)
+PIPELINE_TIMEOUT = 180  # seconds; cancel and retry if LLM/MaaS connection hangs
+ENVELOPE_TIMEOUT = 60  # seconds; cancel and retry if AAP2 artifact fetch hangs
 
 
 async def _process_webhook(job_id: int, state: State):
@@ -22,8 +24,14 @@ async def _process_webhook(job_id: int, state: State):
 
     for attempt in range(1, PIPELINE_MAX_RETRIES + 1):
         try:
-            envelope = await build_incident_envelope(state.aap2, job_id=job_id)
-            ticket_payload = await run_pipeline(envelope, state.settings)
+            envelope = await asyncio.wait_for(
+                build_incident_envelope(state.aap2, job_id=job_id),
+                timeout=ENVELOPE_TIMEOUT,
+            )
+            ticket_payload = await asyncio.wait_for(
+                run_pipeline(envelope, state.settings),
+                timeout=PIPELINE_TIMEOUT,
+            )
             await submit_ticket(
                 payload=ticket_payload,
                 kira=state.kira,
@@ -34,6 +42,20 @@ async def _process_webhook(job_id: int, state: State):
             )
             logger.info("Ticket created for job %s", job_id)
             return
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Pipeline attempt %d/%d timed out for job %s after %ds, retrying immediately",
+                attempt,
+                PIPELINE_MAX_RETRIES,
+                job_id,
+                PIPELINE_TIMEOUT,
+            )
+            if attempt >= PIPELINE_MAX_RETRIES:
+                logger.error(
+                    "Pipeline failed for job %s after %d attempts (all timed out)",
+                    job_id,
+                    PIPELINE_MAX_RETRIES,
+                )
         except Exception as exc:
             if attempt < PIPELINE_MAX_RETRIES:
                 delay = PIPELINE_RETRY_BASE_DELAY * (2 ** (attempt - 1))
