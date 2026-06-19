@@ -8,7 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.34",
     "httpx>=0.28",
     "pydantic>=2.10",
-    "pydantic-settings>=2.7",
+    "pydantic-settings>=2.14.2",
     "deepagents",
     "langchain-core",
     "langchain-anthropic",
